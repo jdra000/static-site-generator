@@ -1,1 +1,1 @@
-# static-site-generator
+BootDev's Static Site Generator Project.

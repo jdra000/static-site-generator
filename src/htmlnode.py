@@ -30,13 +30,13 @@ class LeafNode(HTMLNode):
 		if not self.tag:
 			return self.value
 
-		if self.props:
-			return f"<{self.tag} {self.props_to_html()}>{self.value}</{self.tag}>"
-
-		return f"<{self.tag}>{self.value}</{self.tag}>"
+		if not self.props:
+			return f"<{self.tag}>{self.value}</{self.tag}>"
+		
+		return f"<{self.tag} {self.props_to_html()}>{self.value}</{self.tag}>"
 
 class ParentNode(HTMLNode):
-	def __init__(self, tag, children: LeafNode, props = None):
+	def __init__(self, tag, children, props = None):
 		if not tag or not children:
 			raise ValueError("tag and children are required")
 		super().__init__(tag = tag, value = None, children = children, props = props)

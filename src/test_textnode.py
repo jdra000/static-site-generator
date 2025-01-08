@@ -10,7 +10,10 @@ from textnode import(
 	extract_markdown_links,
 	split_nodes_images,
 	split_nodes_links,
-	text_to_textnodes)
+	text_to_textnodes,
+	markdown_to_blocks,
+	block_to_block_type,
+	markdown_to_html_node)
 
 from htmlnode import LeafNode
 
@@ -30,7 +33,7 @@ class TestTextNode(unittest.TestCase):
 		self.assertIsInstance(node.text_type, TextType)
 
 	# split_nodes_delimiter function
-	def test_split_nodes_delimiter_bold(self):
+	def test_split_nodes_delimiter(self):
 		node1 = TextNode("This is text with a **bold block** word", TextType.TEXT)
 		node2 = TextNode("This is text with a **bold sentence** phrase", TextType.TEXT)
 
@@ -81,7 +84,7 @@ class TestTextNode(unittest.TestCase):
 		text = "This is **text** with an *italic* word and a `code block` and an ![obi wan image](https://i.imgur.com/fJRm4Vk.jpeg) and a [link](https://boot.dev)"
 
 		new_nodes = text_to_textnodes(text)
-		
+
 		expected_nodes = [
 		    TextNode("This is ", TextType.TEXT),
 		    TextNode("text", TextType.BOLD),
@@ -96,6 +99,54 @@ class TestTextNode(unittest.TestCase):
 		]
 		
 		self.assertEqual(new_nodes, expected_nodes)
+
+
+	def test_markdown_to_blocks(self):
+		text = """# This is a heading
+
+		This is a paragraph of text. It has some **bold** and *italic* words inside of it.
+
+		* This is the first list item in a list block
+		* This is a list item
+		* This is another list item"""
+
+		result_list = markdown_to_blocks(text)
+
+		expected_list = [
+			"# This is a heading",
+			"This is a paragraph of text. It has some **bold** and *italic* words inside of it.",
+			"* This is the first list item in a list block * This is a list item * This is another list item"
+		]
+
+		self.assertEqual(result_list, expected_list)
+
+
+	def test_block_to_block_type(self):
+		markdown_blocks = [
+		    "# Heading 1",
+		    "```python\nprint('Hello World!')\n```",
+		    "> This is a quote",
+		    "* Unordered list item 1",
+		    "- Unordered list item 2",
+		    "1. Ordered list item 1",
+		    "Normal text"
+		]
+
+		expected_block_types = [
+		"heading",
+		"code",
+		"quote",
+		"unordered list",
+		"unordered list",
+		"ordered list",
+		"normal",
+		]		
+
+		for i, block in enumerate(markdown_blocks):
+		    category = block_to_block_type(block)
+
+		    self.assertEqual(category, expected_block_types[i])
+
 
 	# extract_markdown_images function
 	def test_extract_markdown_images(self):
@@ -114,19 +165,29 @@ class TestTextNode(unittest.TestCase):
 		self.assertEqual(result, expected_result)
 
 
-	# text_node_to_html_node function
-	def test_text_node_to_html_node(self):
-		node = text_node_to_html_node(TextType.TEXT)
-		self.assertIsInstance(node, LeafNode)
 
-		node = text_node_to_html_node(TextType.LINK)
-		self.assertIsInstance(node, LeafNode)
-		self.assertEqual(node.props.get("href"), "https://www.google.com")
+	def test_markdown_to_html_node(self):
+		markdown = """# Introduction to Markdown
 
-		node = text_node_to_html_node(TextType.IMAGE)
-		self.assertIsInstance(node, LeafNode)
-		self.assertEqual(node.props.get("src"), "url/image")
-		self.assertEqual(node.props.get("alt"), "brief description")
+Markdown is a **lightweight markup language** that you can use to format text. It's widely used in *writing documentation* and creating content for the web.
+
+Here are some key features:
+	
+- You can create **bold** text using `**` or `__`.
+- Italics are created using `*` or `_` for *emphasis*.
+- [Markdown Guide](https://www.markdownguide.org) is a great resource to learn more.
+
+Happy writing!
+"""
+		result = markdown_to_html_node(markdown)
+
+		expected_result = """<div><h1>Introduction to Markdown</h1><p>Markdown is a <b>lightweight markup language</b> that you can use to format text. It's widely used in <i>writing documentation</i> and creating content for the web.</p><p>Here are some key features:</p><ul><li>You can create <b>bold</b> text using <code>**</code> or <code>__</code>.</li><li>Italics are created using <code>*</code> or <code>_</code> for <i>emphasis</i>.</li><li><a href="https://www.markdownguide.org">Markdown Guide</a> is a great resource to learn more.</li></ul><p>Happy writing!</p></div>"""
+
+		self.assertEqual(result, expected_result)
+
+
+
+
 
 if __name__ == "__main__":
 	unittest.main()
